@@ -5,8 +5,8 @@ import { KPICard } from "./KPICard"
 describe("KPICard", () => {
   it("renders title, value and subtitle", () => {
     render(<KPICard title="MAE" value="2126.1 MW" subtitle="Average |error|" />)
-    expect(screen.getByText("MAE")).toBeInTheDocument()
-    expect(screen.getByText("2126.1 MW")).toBeInTheDocument()
-    expect(screen.getByText("Average |error|")).toBeInTheDocument()
+    expect(screen.getByText("MAE")).toBeDefined()
+    expect(screen.getByText("2126.1 MW")).toBeDefined()
+    expect(screen.getByText("Average |error|")).toBeDefined()
   })
 })
