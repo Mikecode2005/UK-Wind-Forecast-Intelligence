@@ -28,7 +28,6 @@ from app.schemas import (
     TimeseriesResponse,
     DEFAULT_CUTOFF_HOUR,
     DEFAULT_CUTOFF_MINUTE,
-    DEFAULT_PERIOD,
 )
 from app.services.elexon import ElexonClient, fetch_fuelhh_actuals, fetch_windfor_forecasts
 
