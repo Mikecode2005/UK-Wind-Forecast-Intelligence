@@ -4,7 +4,7 @@ import { motion } from "framer-motion"
 interface FilterBarProps {
   defaultFrom: string
   defaultTo: string
-  onRun: (from: string, to: string, cutoffHour: number) => void
+  onRun: (from: string, to: string, cutoffHour?: number) => void
 }
 
 export function FilterBar({
@@ -23,7 +23,9 @@ export function FilterBar({
       className="border rounded-xl bg-slate-50 dark:bg-slate-900/60 p-4 flex flex-wrap items-center gap-3"
     >
       <div className="hidden md:flex items-center gap-2">
-        <div className="text-xs font-medium text-slate-500 dark:text-slate-400">Analysis period</div>
+        <div className="text-xs font-medium text-slate-500 dark:text-slate-400">
+          Analysis period
+        </div>
         <div className="flex items-center gap-2">
           <input
             type="date"
@@ -42,7 +44,9 @@ export function FilterBar({
       </div>
       <div className="flex flex-col md:flex-row md:items-center gap-2 w-full md:w-auto">
         <div className="flex items-center gap-2">
-          <div className="text-xs font-medium text-slate-500 dark:text-slate-400">Cutoff (D-1)</div>
+          <div className="text-xs font-medium text-slate-500 dark:text-slate-400">
+            Cutoff (D-1)
+          </div>
           <select
             value={cutoffHour}
             onChange={(e) => setCutoffHour(Number(e.target.value))}
