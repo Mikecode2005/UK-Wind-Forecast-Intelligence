@@ -25,7 +25,14 @@ import httpx
 BASE_URL = os.environ.get(
     "ELEXON_BASE_URL", "https://data.elexon.co.uk/bmrs/api/v1/datasets"
 )
-CACHE_DIR = os.environ.get("ELEXON_CACHE_DIR", os.path.join(os.path.dirname(__file__), "..", "..", ".cache"))
+
+# On Vercel (serverless), only /tmp is writable. Use /tmp/elexon_cache there,
+# otherwise default to repo-relative .cache for local/Docker.
+_IS_VERCEL = os.environ.get("VERCEL", "").lower() == "1"
+_DEFAULT_CACHE = (
+    "/tmp/elexon_cache" if _IS_VERCEL else os.path.join(os.path.dirname(__file__), "..", "..", ".cache")
+)
+CACHE_DIR = os.environ.get("ELEXON_CACHE_DIR", _DEFAULT_CACHE)
 REQUEST_TIMEOUT = float(os.environ.get("ELEXON_REQUEST_TIMEOUT", "40"))
 ENABLE_CACHE = os.environ.get("ELEXON_ENABLE_CACHE", "1") == "1"
 HTTP_VERIFY = os.environ.get("ELEXON_HTTP_VERIFY", "false").lower() != "false"
