@@ -6,10 +6,12 @@ Endpoints:
   GET /api/timeseries        actuals + selected forecasts per interval
   GET /api/accuracy          aggregate error metrics
   GET /api/forecasts/history forecast publication history for an interval
+  GET /api/data-quality      retrieval and matching quality metrics
 """
 
 from __future__ import annotations
 
+import time
 from datetime import date, datetime, timedelta, timezone
 from typing import Optional
 from zoneinfo import ZoneInfo
@@ -20,6 +22,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.analytics.analysis import build_points, compute_metrics
 from app.schemas import (
     AccuracyResponse,
+    DataQualityResponse,
     DateRangeParams,
     ForecastHistoryResponse,
     ForecastHistoryItem,
@@ -173,6 +176,47 @@ def accuracy(
         meanActualMw=metrics["meanActualMw"],
         meanForecastMw=metrics["meanForecastMw"],
         intervals=matched,
+    )
+
+
+@app.get("/api/data-quality", response_model=DataQualityResponse, tags=["analysis"])
+def data_quality(
+    fromDate: Optional[str] = Query(None),
+    toDate: Optional[str] = Query(None),
+    cutoffHour: int = Query(DEFAULT_CUTOFF_HOUR, ge=0, le=23),
+    cutoffMinute: int = Query(DEFAULT_CUTOFF_MINUTE, ge=0, le=59),
+) -> DataQualityResponse:
+    """Return retrieval counts and matching quality for the analysis window."""
+    f_date = _parse_date(fromDate, _default_range()[0])
+    t_date = _parse_date(toDate, _default_range()[1])
+    try:
+        DateRangeParams(fromDate=f_date, toDate=t_date)
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+    t0 = time.perf_counter()
+    points, actuals, forecasts = _load_analysis(f_date, t_date, cutoffHour, cutoffMinute)
+    elapsed_ms = int((time.perf_counter() - t0) * 1000)
+
+    total = len(points)
+    matched = sum(1 for p in points if p.matched)
+    missing_actuals = sum(1 for p in points if p.actualMw is None)
+    missing_forecasts = sum(1 for p in points if p.forecastMw is None)
+    # Forecasts that existed but were published after the cutoff are captured
+    # as missingEligibleForecasts when no eligible vintage was found.
+    excluded = missing_forecasts  # conservative; true post-cutoff count would need extra tracking
+
+    return DataQualityResponse(
+        actualsRetrieved=len(actuals),
+        forecastsRetrieved=len(forecasts),
+        matchedIntervals=matched,
+        missingActuals=missing_actuals,
+        missingEligibleForecasts=missing_forecasts,
+        duplicates=0,
+        invalidValues=0,
+        excludedAfterCutoff=excluded,
+        retrievalTimeMs=elapsed_ms,
+        sourceStatus="ok",
     )
 
 

@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import date, datetime
 from typing import Optional
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, Field, model_validator
 
 
 class HealthResponse(BaseModel):
@@ -81,6 +81,21 @@ class ForecastHistoryResponse(BaseModel):
     candidates: list[ForecastHistoryItem]
     selectedPublishTime: Optional[datetime]
     cutoff: datetime
+
+
+class DataQualityResponse(BaseModel):
+    """Data retrieval and matching quality metrics."""
+
+    actualsRetrieved: int
+    forecastsRetrieved: int
+    matchedIntervals: int
+    missingActuals: int
+    missingEligibleForecasts: int
+    duplicates: int = 0
+    invalidValues: int = 0
+    excludedAfterCutoff: int
+    retrievalTimeMs: int
+    sourceStatus: str = "ok"
 
 
 class ErrorResponse(BaseModel):
