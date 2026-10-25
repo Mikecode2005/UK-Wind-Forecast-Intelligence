@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query"
 import { api } from "@/services/api"
-import type { ForecastHistory } from "@/types/api"
 
 export function useForecastHistory(
   intervalStart?: string,
@@ -9,7 +8,8 @@ export function useForecastHistory(
 ) {
   return useQuery({
     queryKey: ["forecastHistory", intervalStart, cutoffHour, cutoffMinute],
-    queryFn: () => api.forecastHistory(intervalStart!, cutoffHour, cutoffMinute),
+    queryFn: () =>
+      api.forecastHistory(intervalStart!, cutoffHour, cutoffMinute),
     enabled: !!intervalStart,
     staleTime: 5 * 60 * 1000,
     retry: 2,

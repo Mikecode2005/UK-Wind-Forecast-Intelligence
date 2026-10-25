@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query"
 import { api } from "@/services/api"
-import type { DataQuality } from "@/types/api"
 
 export function useDataQuality(
   fromDate?: string,
