@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query"
 import { api } from "@/services/api"
-import type { Timeseries } from "@/types/api"
 
 export function useTimeseries(
   fromDate?: string,

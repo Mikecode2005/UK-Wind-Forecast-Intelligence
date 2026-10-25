@@ -3,7 +3,6 @@ import { format } from 'date-fns'
 import { BarChart2 } from 'lucide-react'
 import { api } from '@/services/api'
 import { useQuery } from '@tanstack/react-query'
-import type { Accuracy, IntervalPoint } from '@/types/api'
 import { FilterBar } from '@/components/FilterBar'
 import { AccuracyPanel } from '@/components/AccuracyPanel'
 import { ActualVsForecastChart } from '@/components/ActualVsForecastChart'
@@ -62,11 +61,13 @@ export function ForecastAccuracyPage() {
     return sortConfig.direction === 'asc' ? comparison : -comparison
   })
 
-  const handleSort = (key) => {
-    setSortConfig((current) => ({
-      key,
-      direction: current?.key === key && current.direction === 'asc' ? 'desc' : 'asc',
-    }))
+  const handleSort = (key: string) => {
+    setSortConfig((current) => {
+      if (current?.key === key) {
+        return { key, direction: current.direction === 'asc' ? 'desc' : 'asc' }
+      }
+      return { key, direction: 'asc' }
+    })
   }
 
   return (

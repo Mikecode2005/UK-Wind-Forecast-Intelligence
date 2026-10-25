@@ -52,24 +52,25 @@ export function Sidebar() {
 
         <nav className="flex-1 py-4 px-2 overflow-y-auto" role="navigation" aria-label="Main navigation">
           <ul className="space-y-1" role="list">
-            {navItems.map((item) => (
-              <li key={item.path}>
-                <NavLink
-                  to={item.path}
-                  className={({ isActive }) =>
-                    `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+            {navItems.map((item) => {
+              const isActive = location.pathname === item.path
+              return (
+                <li key={item.path}>
+                  <NavLink
+                    to={item.path}
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                       isActive
                         ? "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100"
                         : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100"
-                    } ${collapsed ? "justify-center px-2" : ""}`
-                  }
-                  aria-current={({ isActive }) => (isActive ? "page" : undefined)}
-                >
-                  <item.icon className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
-                  {!collapsed && <span>{item.label}</span>}
-                </NavLink>
-              </li>
-            ))}
+                    } ${collapsed ? "justify-center px-2" : ""}`}
+                    aria-current={isActive ? "page" : undefined}
+                  >
+                    <item.icon className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
+                    {!collapsed && <span>{item.label}</span>}
+                  </NavLink>
+                </li>
+              )
+            })}
           </ul>
         </nav>
 

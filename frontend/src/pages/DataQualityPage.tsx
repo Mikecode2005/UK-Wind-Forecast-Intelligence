@@ -1,11 +1,17 @@
 import { useState } from "react"
-import { format } from "date-fns"
-import { Calendar, Clock, AlertCircle, CheckCircle, XCircle, Database, Wifi, AlertTriangle, ChevronRight } from "lucide-react"
+import {
+  AlertCircle,
+  CheckCircle,
+  XCircle,
+  Database,
+  Wifi,
+  AlertTriangle,
+  ChevronRight,
+} from "lucide-react"
 import { api } from "@/services/api"
 import { useQuery } from "@tanstack/react-query"
-import type { DataQuality } from "@/types/api"
-import { FilterBar } from "@/components/dashboard/FilterBar"
-import { MethodologyPanel } from "@/components/dashboard/MethodologyPanel"
+import { FilterBar } from "@/components/FilterBar"
+import { MethodologyPanel } from "@/components/MethodologyPanel"
 
 const DEFAULT_FROM = "2026-01-01"
 const DEFAULT_TO = "2026-01-31"
@@ -46,7 +52,11 @@ export function DataQualityPage() {
       <FilterBar
         defaultFrom={DEFAULT_FROM}
         defaultTo={DEFAULT_TO}
-        onRun={() => {}}
+        onRun={(f, t, ch) => {
+          setFrom(f)
+          setTo(t)
+          setCutoffHour(ch)
+        }}
       />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -75,7 +85,13 @@ export function DataQualityPage() {
         </dl>
       </div>
 
-      <MethodologyPanel period="{from} to {to}" cutoff="{cutoffHour}:00 UK (D-1)" coverage={0} matched={0} total={0} />
+      <MethodologyPanel
+        period={`${from} to ${to}`}
+        cutoff={`${cutoffHour}:00 UK (D-1)`}
+        coverage={0}
+        matched={0}
+        total={0}
+      />
     </div>
   )
 }

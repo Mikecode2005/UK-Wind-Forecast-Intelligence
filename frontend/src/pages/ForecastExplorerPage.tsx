@@ -1,9 +1,8 @@
 import { useState } from 'react'
 import { format } from 'date-fns'
-import { ChevronRight, ChevronDown, ChevronUp, Calendar, Clock, Filter, ArrowUpDown } from 'lucide-react'
 import { api } from '@/services/api'
 import { useQuery } from '@tanstack/react-query'
-import type { IntervalPoint, ForecastHistoryItem } from '@/types/api'
+import type { IntervalPoint } from '@/types/api'
 import { FilterBar } from '@/components/FilterBar'
 
 const DEFAULT_FROM = '2026-01-01'
@@ -12,7 +11,7 @@ const DEFAULT_TO = '2026-01-31'
 export function ForecastExplorerPage() {
   const [from, setFrom] = useState(DEFAULT_FROM)
   const [to, setTo] = useState(DEFAULT_TO)
-  const [cutoffHour] = useState(11)
+  const [cutoffHour, setCutoffHour] = useState(11)
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null)
 
   const { data: timeseries } = useQuery({
@@ -24,25 +23,27 @@ export function ForecastExplorerPage() {
   const points = timeseries?.points || []
   const matched = points.filter((p) => p.matched)
 
-  const openHistory = async (pt) => {
+  const openHistory = async (pt: IntervalPoint) => {
     try {
-      const h = await api.forecastHistory(pt.startTime, cutoffHour, 0)
+      await api.forecastHistory(pt.startTime, cutoffHour, 0)
     } catch (e) {
       console.error(e)
     }
   }
 
-  const handleSort = (key) => {
-    setSortConfig((current) => ({
-      key,
-      direction: current?.key === key && current.direction === 'asc' ? 'desc' : 'asc',
-    }))
+  const handleSort = (key: string) => {
+    setSortConfig((current) => {
+      if (current?.key === key) {
+        return { key, direction: current.direction === 'asc' ? 'desc' : 'asc' }
+      }
+      return { key, direction: 'asc' }
+    })
   }
 
-  const sortedData = [...matched].sort((a: typeof matched[0], b: typeof matched[0]) => {
+  const sortedData = [...matched].sort((a: IntervalPoint, b: IntervalPoint) => {
     if (!sortConfig) return 0
-    const aVal = a[sortConfig.key]
-    const bVal = b[sortConfig.key]
+    const aVal = a[sortConfig.key as keyof IntervalPoint]
+    const bVal = b[sortConfig.key as keyof IntervalPoint]
     if (aVal === null && bVal === null) return 0
     if (aVal === null) return sortConfig.direction === 'asc' ? 1 : -1
     if (bVal === null) return sortConfig.direction === 'asc' ? -1 : 1
@@ -58,6 +59,7 @@ export function ForecastExplorerPage() {
         onRun={(f, t, ch) => {
           setFrom(f)
           setTo(t)
+          setCutoffHour(ch)
         }}
       />
 

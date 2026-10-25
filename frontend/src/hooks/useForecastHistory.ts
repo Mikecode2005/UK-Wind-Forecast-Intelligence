@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query"
 import { api } from "@/services/api"
-import type { ForecastHistory } from "@/types/api"
 
 export function useForecastHistory(
   intervalStart?: string,

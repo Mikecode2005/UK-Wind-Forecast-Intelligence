@@ -1,14 +1,11 @@
 import { Outlet } from "react-router-dom"
 import { Sidebar } from "./Sidebar"
 import { Header } from "./Header"
+import { useState } from "react"
 
 export function AppShell() {
   const [analysisFrom, setAnalysisFrom] = useState("2026-01-01")
-  const [analysisTo, setAnalysisTo] = useState("2026-01-31")
-  const [cutoffHour, setCutoffHour] = useState(11)
-  const [lastRefresh, setLastRefresh] = useState<Date | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const analysisTo = "2026-01-31"
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex">
       <Sidebar />
