@@ -1,4 +1,3 @@
-import { useState } from "react"
 import { api } from "@/services/api"
 import { useQuery } from "@tanstack/react-query"
 import type { IntervalPoint } from "@/types/api"
@@ -9,31 +8,45 @@ import { DataTable } from "@/components/DataTable"
 import { AccuracyPanel } from "@/components/AccuracyPanel"
 import { MethodologyPanel } from "@/components/MethodologyPanel"
 import { FilterBar } from "@/components/FilterBar"
-
-const DEFAULT_FROM = "2026-01-01"
-const DEFAULT_TO = "2026-01-31"
+import { useAnalysisPeriod } from "@/hooks/useAnalysisPeriod"
+import { formatSafe, isJanuary2026, periodLabel } from "@/lib/dates"
 
 export function OverviewPage() {
-  const [from] = useState(DEFAULT_FROM)
-  const [to] = useState(DEFAULT_TO)
-  const [cutoffHour] = useState(11)
+  const {
+    from,
+    to,
+    cutoffHour,
+    setPeriod,
+    setCutoffHour,
+    setIsLoading,
+    setLastRefresh,
+    refreshKey,
+  } = useAnalysisPeriod()
 
-  const { data: overview, isLoading: ovLoading } = useQuery({
-    queryKey: ["overview", from, to, cutoffHour, 0],
+  const { data: overview, isLoading: ovLoading, isFetching: ovFetching } = useQuery({
+    queryKey: ["overview", from, to, cutoffHour, 0, refreshKey],
     queryFn: () => api.overview(from, to, cutoffHour, 0),
+    enabled: !!from && !!to && from <= to,
   })
 
   const { data: timeseries, isLoading: tsLoading } = useQuery({
-    queryKey: ["timeseries", from, to, cutoffHour, 0],
+    queryKey: ["timeseries", from, to, cutoffHour, 0, refreshKey],
     queryFn: () => api.timeseries(from, to, cutoffHour, 0),
+    enabled: !!from && !!to && from <= to,
   })
 
   const { data: accuracy, isLoading: accLoading } = useQuery({
-    queryKey: ["accuracy", from, to, cutoffHour, 0],
+    queryKey: ["accuracy", from, to, cutoffHour, 0, refreshKey],
     queryFn: () => api.accuracy(from, to, cutoffHour, 0),
+    enabled: !!from && !!to && from <= to,
   })
 
-  const isLoading = ovLoading || tsLoading || accLoading
+  const isLoading = ovLoading || tsLoading || accLoading || ovFetching
+
+  // sync loading flag for header
+  if (typeof window !== "undefined") {
+    // lightweight side-effect via query state is fine; avoid setState in render
+  }
 
   const openHistory = async (pt: IntervalPoint) => {
     try {
@@ -46,6 +59,7 @@ export function OverviewPage() {
   const points = timeseries?.points || []
   const matched = points.filter((p) => p.matched)
   const tableRows = matched.slice(0, 25)
+  const pilotMonth = isJanuary2026(from, to)
 
   if (isLoading && !overview) {
     return (
@@ -60,7 +74,7 @@ export function OverviewPage() {
 
   return (
     <div className="space-y-6 max-w-[1400px]">
-      {/* Hero */}
+      {/* Hero — dynamic period */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-700 via-brand-600 to-brand-500 px-6 py-7 text-white shadow-lg">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(255,255,255,0.12),_transparent_50%)]" />
         <div className="relative flex flex-col md:flex-row md:items-end md:justify-between gap-4">
@@ -69,7 +83,7 @@ export function OverviewPage() {
               Day-ahead procurement support
             </p>
             <h2 className="text-2xl md:text-3xl font-bold tracking-tight">
-              January 2026 wind forecast performance
+              {periodLabel(from, to)} wind forecast performance
             </h2>
             <p className="mt-2 text-brand-100 text-sm max-w-xl leading-relaxed">
               What the procurement team knew at decision time — and how accurate those
@@ -87,32 +101,52 @@ export function OverviewPage() {
         </div>
       </div>
 
-      <FilterBar defaultFrom={DEFAULT_FROM} defaultTo={DEFAULT_TO} onRun={() => {}} />
+      {!pilotMonth && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          <strong>Pilot scope note:</strong> this engagement is validated for{" "}
+          <strong>January 2026</strong>. Other months may return partial or empty data
+          depending on Elexon availability.
+        </div>
+      )}
+
+      <FilterBar
+        defaultFrom={from}
+        defaultTo={to}
+        defaultCutoff={cutoffHour}
+        onRun={(f, t, ch) => {
+          setPeriod(f, t)
+          if (typeof ch === "number") setCutoffHour(ch)
+          setLastRefresh(new Date())
+          setIsLoading(false)
+        }}
+      />
 
       {/* KPI strip */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <KPICard
           title="Mean Absolute Error"
-          value={overview ? `${overview.maeMw?.toFixed(1)} MW` : "— MW"}
+          value={overview?.maeMw != null ? `${overview.maeMw.toFixed(1)} MW` : "— MW"}
           subtitle="Average |forecast − actual|"
         />
         <KPICard
           title="Root Mean Squared Error"
-          value={overview ? `${overview.rmseMw?.toFixed(1)} MW` : "— MW"}
+          value={overview?.rmseMw != null ? `${overview.rmseMw.toFixed(1)} MW` : "— MW"}
           subtitle="Penalizes larger deviations"
         />
         <KPICard
           title="Mean Forecast Bias"
           value={
-            overview
-              ? `${(overview.biasMw ?? 0) >= 0 ? "+" : ""}${(overview.biasMw ?? 0).toFixed(1)} MW`
+            overview?.biasMw != null
+              ? `${overview.biasMw >= 0 ? "+" : ""}${overview.biasMw.toFixed(1)} MW`
               : "— MW"
           }
           subtitle="Forecast − actual (positive = overforecast)"
         />
         <KPICard
           title="Data Coverage"
-          value={overview ? `${overview.dataCoveragePercent.toFixed(1)}%` : "— %"}
+          value={
+            overview ? `${overview.dataCoveragePercent.toFixed(1)}%` : "— %"
+          }
           subtitle={
             overview
               ? `${overview.matchedIntervals.toLocaleString()} / ${overview.totalIntervals.toLocaleString()} intervals`
@@ -122,7 +156,15 @@ export function OverviewPage() {
         />
       </div>
 
-      {/* Main content */}
+      {matched.length === 0 && !isLoading && (
+        <div className="card p-8 text-center">
+          <p className="text-slate-700 font-medium">No matched forecast/actual pairs for this period.</p>
+          <p className="text-sm text-slate-500 mt-1">
+            Try January 2026 (the validated pilot window) or a wider range.
+          </p>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
           <ActualVsForecastChart points={points} />
@@ -146,8 +188,8 @@ export function OverviewPage() {
             }
           />
           <MethodologyPanel
-            period={overview?.period || ""}
-            cutoff={overview?.forecastCutoff || ""}
+            period={overview?.period || periodLabel(from, to)}
+            cutoff={overview?.forecastCutoff || `${cutoffHour}:00 UK (D-1)`}
             coverage={overview?.dataCoveragePercent || 0}
             matched={overview?.matchedIntervals || 0}
             total={overview?.totalIntervals || 0}

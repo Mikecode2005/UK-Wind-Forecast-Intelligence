@@ -1,6 +1,6 @@
 import type { IntervalPoint } from "@/types/api"
-import { format } from "date-fns"
 import { motion } from "framer-motion"
+import { formatSafe } from "@/lib/dates"
 
 interface DataTableProps {
   points: IntervalPoint[]
@@ -54,35 +54,33 @@ export function DataTable({ points, onRowSelect }: DataTableProps) {
                   key={p.startTime}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  transition={{ delay: i * 0.008 }}
+                  transition={{ delay: Math.min(i * 0.008, 0.3) }}
                   className="border-b border-slate-100 hover:bg-brand-50/60 cursor-pointer transition-colors"
                   onClick={() => onRowSelect?.(p)}
                 >
                   <td className="py-2.5 text-slate-800 font-mono text-[13px]">
-                    {format(new Date(p.startTime), "dd MMM HH:mm")}
+                    {formatSafe(p.startTime, "dd MMM HH:mm")}
                   </td>
                   <td className="py-2.5 text-slate-700">{p.settlementPeriod}</td>
                   <td className="py-2.5 text-right text-slate-800 tabular-nums">
-                    {isMatched ? p.actualMw!.toFixed(1) : "—"}
+                    {isMatched && p.actualMw != null ? p.actualMw.toFixed(1) : "—"}
                   </td>
                   <td className="py-2.5 text-right text-slate-800 tabular-nums">
-                    {isMatched ? p.forecastMw!.toFixed(1) : "—"}
+                    {isMatched && p.forecastMw != null ? p.forecastMw.toFixed(1) : "—"}
                   </td>
                   <td
                     className={`py-2.5 text-right tabular-nums font-medium ${
-                      isMatched
-                        ? (p.errorMw ?? 0) >= 0
+                      isMatched && p.errorMw != null
+                        ? p.errorMw >= 0
                           ? "text-red-600"
                           : "text-emerald-600"
                         : "text-slate-400"
                     }`}
                   >
-                    {isMatched ? p.errorMw!.toFixed(1) : "—"}
+                    {isMatched && p.errorMw != null ? p.errorMw.toFixed(1) : "—"}
                   </td>
                   <td className="py-2.5 text-right text-slate-600 text-[13px]">
-                    {p.forecastPublishTime
-                      ? format(new Date(p.forecastPublishTime), "dd MMM HH:mm")
-                      : "—"}
+                    {formatSafe(p.forecastPublishTime, "dd MMM HH:mm")}
                   </td>
                   <td className="py-2.5">
                     <span
