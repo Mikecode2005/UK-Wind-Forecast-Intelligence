@@ -29,7 +29,7 @@ export function Dashboard() {
   const [history, setHistory] = useState<ForecastHistory | null>(null)
 
   const run = useCallback(
-    async (f: string, t: string, ch: number) => {
+    async (f: string, t: string, ch: number = 11) => {
       setLoading(true)
       setError(null)
       setFrom(f)

@@ -11,7 +11,7 @@ const DEFAULT_TO = "2026-01-31"
 export function ForecastExplorerPage() {
   const [from, setFrom] = useState(DEFAULT_FROM)
   const [to, setTo] = useState(DEFAULT_TO)
-  const [cutoffHour] = useState(11)
+  const [cutoffHour, setCutoffHour] = useState(11)
   const [sortConfig, setSortConfig] = useState<{
     key: string
     direction: "asc" | "desc"
@@ -43,10 +43,10 @@ export function ForecastExplorerPage() {
     }))
   }
 
-  const sortedData = [...matched].sort((a, b) => {
+  const sortedData = [...matched].sort((a: IntervalPoint, b: IntervalPoint) => {
     if (!sortConfig) return 0
-    const aVal = (a as Record<string, unknown>)[sortConfig.key]
-    const bVal = (b as Record<string, unknown>)[sortConfig.key]
+    const aVal = a[sortConfig.key as keyof IntervalPoint]
+    const bVal = b[sortConfig.key as keyof IntervalPoint]
     if (aVal == null && bVal == null) return 0
     if (aVal == null) return sortConfig.direction === "asc" ? 1 : -1
     if (bVal == null) return sortConfig.direction === "asc" ? -1 : 1
@@ -59,9 +59,10 @@ export function ForecastExplorerPage() {
       <FilterBar
         defaultFrom={DEFAULT_FROM}
         defaultTo={DEFAULT_TO}
-        onRun={(f, t) => {
+        onRun={(f, t, ch) => {
           setFrom(f)
           setTo(t)
+          setCutoffHour(ch ?? 11)
         }}
       />
 
