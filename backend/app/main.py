@@ -1,23 +1,15 @@
-"""FastAPI backend for the Wind Forecast Intelligence portal.
-
-Endpoints:
-  GET /api/health
-  GET /api/overview          monthly KPIs + data coverage
-  GET /api/timeseries        actuals + selected forecasts per interval
-  GET /api/accuracy          aggregate error metrics
-  GET /api/forecasts/history forecast publication history for an interval
-  GET /api/data-quality      retrieval and matching quality metrics
-"""
+"""FastAPI backend for the Wind Forecast Intelligence portal."""
 
 from __future__ import annotations
 
 import time
 from datetime import date, datetime, timedelta, timezone
-from typing import Optional
+from typing import Any, Optional
 from zoneinfo import ZoneInfo
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel, Field
 
 from app.analytics.analysis import build_points, compute_metrics
 from app.schemas import (
@@ -33,6 +25,7 @@ from app.schemas import (
     DEFAULT_CUTOFF_MINUTE,
 )
 from app.services.elexon import ElexonClient, fetch_fuelhh_actuals, fetch_windfor_forecasts
+from app.services.ai_insights import generate_insights
 
 app = FastAPI(title="Wind Forecast Intelligence", version="1.0.0")
 
@@ -49,7 +42,6 @@ UK = ZoneInfo("Europe/London")
 
 
 def _default_range() -> tuple[date, date]:
-    """Default analysis period: January 2026."""
     return date(2026, 1, 1), date(2026, 1, 31)
 
 
@@ -70,12 +62,6 @@ def health() -> HealthResponse:
 
 
 def _load_analysis(from_date: date, to_date: date, cutoff_hour: int, cutoff_minute: int):
-    """Fetch raw data and build interval points for a date range.
-
-    FUELHH actuals are pulled for a publish window covering the analysis month plus
-    one day either side so late republications are captured.  WINDFOR forecasts are
-    pulled over the same window.
-    """
     fetch_from = datetime(from_date.year, from_date.month, from_date.day) - timedelta(days=1)
     fetch_to = datetime(to_date.year, to_date.month, to_date.day) + timedelta(days=2)
 
@@ -186,7 +172,6 @@ def data_quality(
     cutoffHour: int = Query(DEFAULT_CUTOFF_HOUR, ge=0, le=23),
     cutoffMinute: int = Query(DEFAULT_CUTOFF_MINUTE, ge=0, le=59),
 ) -> DataQualityResponse:
-    """Return retrieval counts and matching quality for the analysis window."""
     f_date = _parse_date(fromDate, _default_range()[0])
     t_date = _parse_date(toDate, _default_range()[1])
     try:
@@ -198,13 +183,9 @@ def data_quality(
     points, actuals, forecasts = _load_analysis(f_date, t_date, cutoffHour, cutoffMinute)
     elapsed_ms = int((time.perf_counter() - t0) * 1000)
 
-    total = len(points)
     matched = sum(1 for p in points if p.matched)
     missing_actuals = sum(1 for p in points if p.actualMw is None)
     missing_forecasts = sum(1 for p in points if p.forecastMw is None)
-    # Forecasts that existed but were published after the cutoff are captured
-    # as missingEligibleForecasts when no eligible vintage was found.
-    excluded = missing_forecasts  # conservative; true post-cutoff count would need extra tracking
 
     return DataQualityResponse(
         actualsRetrieved=len(actuals),
@@ -214,7 +195,7 @@ def data_quality(
         missingEligibleForecasts=missing_forecasts,
         duplicates=0,
         invalidValues=0,
-        excludedAfterCutoff=excluded,
+        excludedAfterCutoff=missing_forecasts,
         retrievalTimeMs=elapsed_ms,
         sourceStatus="ok",
     )
@@ -226,8 +207,6 @@ def forecast_history(
     cutoffHour: int = Query(DEFAULT_CUTOFF_HOUR, ge=0, le=23),
     cutoffMinute: int = Query(DEFAULT_CUTOFF_MINUTE, ge=0, le=59),
 ) -> ForecastHistoryResponse:
-    """Return every candidate forecast publication for the hour containing the
-    requested interval, flagging which one was selected under the cutoff rule."""
     try:
         start_utc = datetime.fromisoformat(intervalStart.replace("Z", "+00:00"))
         if start_utc.tzinfo is None:
@@ -274,3 +253,32 @@ def forecast_history(
         selectedPublishTime=selected.publishTime if selected else None,
         cutoff=cutoff_local,
     )
+
+
+class AIInsightsRequest(BaseModel):
+    fromDate: str
+    toDate: str
+    cutoffHour: int = 11
+    maeMw: Optional[float] = None
+    rmseMw: Optional[float] = None
+    biasMw: Optional[float] = None
+    mapePercent: Optional[float] = None
+    matchedIntervals: Optional[int] = None
+    dataCoveragePercent: Optional[float] = None
+
+
+class AIInsightsResponse(BaseModel):
+    insights: str
+    source: str = Field(description="rules | llm:<model>")
+
+
+@app.post("/api/ai-insights", response_model=AIInsightsResponse, tags=["analysis"])
+def ai_insights(body: AIInsightsRequest) -> AIInsightsResponse:
+    """Generate procurement-oriented insights from accuracy metrics.
+
+    Set AI_API_KEY (or OPENAI_API_KEY) to enable LLM briefings.
+    Optional: AI_API_BASE, AI_MODEL. Falls back to deterministic rules.
+    """
+    payload: dict[str, Any] = body.model_dump()
+    text, source = generate_insights(payload)
+    return AIInsightsResponse(insights=text, source=source)

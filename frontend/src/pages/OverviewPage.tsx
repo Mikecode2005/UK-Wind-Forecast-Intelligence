@@ -8,8 +8,10 @@ import { DataTable } from "@/components/DataTable"
 import { AccuracyPanel } from "@/components/AccuracyPanel"
 import { MethodologyPanel } from "@/components/MethodologyPanel"
 import { FilterBar } from "@/components/FilterBar"
+import { AIInsightsPanel } from "@/components/AIInsightsPanel"
+import { ExportAnalysisButton } from "@/components/ExportAnalysisButton"
 import { useAnalysisPeriod } from "@/hooks/useAnalysisPeriod"
-import { formatSafe, isJanuary2026, periodLabel } from "@/lib/dates"
+import { isJanuary2026, periodLabel } from "@/lib/dates"
 
 export function OverviewPage() {
   const {
@@ -43,11 +45,6 @@ export function OverviewPage() {
 
   const isLoading = ovLoading || tsLoading || accLoading || ovFetching
 
-  // sync loading flag for header
-  if (typeof window !== "undefined") {
-    // lightweight side-effect via query state is fine; avoid setState in render
-  }
-
   const openHistory = async (pt: IntervalPoint) => {
     try {
       await api.forecastHistory(pt.startTime, cutoffHour, 0)
@@ -74,7 +71,6 @@ export function OverviewPage() {
 
   return (
     <div className="space-y-6 max-w-[1400px]">
-      {/* Hero — dynamic period */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-700 via-brand-600 to-brand-500 px-6 py-7 text-white shadow-lg">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(255,255,255,0.12),_transparent_50%)]" />
         <div className="relative flex flex-col md:flex-row md:items-end md:justify-between gap-4">
@@ -90,13 +86,20 @@ export function OverviewPage() {
               forecasts turned out against actual generation.
             </p>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 items-center">
             <span className="inline-flex items-center px-3 py-1.5 rounded-full bg-white/15 text-xs font-medium backdrop-blur-sm border border-white/20">
               Cutoff {cutoffHour}:00 UK · D-1
             </span>
             <span className="inline-flex items-center px-3 py-1.5 rounded-full bg-amber-400/20 text-amber-50 text-xs font-medium border border-amber-300/30">
               Historical analysis — not live
             </span>
+            <ExportAnalysisButton
+              overview={overview}
+              accuracy={accuracy}
+              from={from}
+              to={to}
+              cutoffHour={cutoffHour}
+            />
           </div>
         </div>
       </div>
@@ -121,7 +124,6 @@ export function OverviewPage() {
         }}
       />
 
-      {/* KPI strip */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <KPICard
           title="Mean Absolute Error"
@@ -144,9 +146,7 @@ export function OverviewPage() {
         />
         <KPICard
           title="Data Coverage"
-          value={
-            overview ? `${overview.dataCoveragePercent.toFixed(1)}%` : "— %"
-          }
+          value={overview ? `${overview.dataCoveragePercent.toFixed(1)}%` : "— %"}
           subtitle={
             overview
               ? `${overview.matchedIntervals.toLocaleString()} / ${overview.totalIntervals.toLocaleString()} intervals`
@@ -186,6 +186,13 @@ export function OverviewPage() {
                 intervals: [],
               }
             }
+          />
+          <AIInsightsPanel
+            from={from}
+            to={to}
+            cutoffHour={cutoffHour}
+            overview={overview}
+            accuracy={accuracy}
           />
           <MethodologyPanel
             period={overview?.period || periodLabel(from, to)}

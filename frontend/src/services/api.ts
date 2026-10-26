@@ -9,15 +9,33 @@ import type {
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? ""
 
-async function fetchJson<T>(path: string): Promise<T> {
+async function fetchJson<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
-    headers: { Accept: "application/json" },
+    headers: { Accept: "application/json", "Content-Type": "application/json" },
+    ...init,
   })
   if (!res.ok) {
     const body = (await res.json().catch(() => ({}))) as { error?: string; detail?: string }
-    throw new Error(body.error || `Request failed (${res.status})`)
+    throw new Error(body.detail || body.error || `Request failed (${res.status})`)
   }
   return (await res.json()) as T
+}
+
+export type AIInsightsRequest = {
+  fromDate: string
+  toDate: string
+  cutoffHour: number
+  maeMw?: number | null
+  rmseMw?: number | null
+  biasMw?: number | null
+  mapePercent?: number | null
+  matchedIntervals?: number | null
+  dataCoveragePercent?: number | null
+}
+
+export type AIInsightsResponse = {
+  insights: string
+  source: string
 }
 
 export const api = {
@@ -64,6 +82,12 @@ export const api = {
     qs.set("cutoffMinute", String(cutoffMinute))
     return fetchJson<DataQuality>(`/api/data-quality?${qs}`)
   },
+
+  aiInsights: (body: AIInsightsRequest) =>
+    fetchJson<AIInsightsResponse>(`/api/ai-insights`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
 
   health: () => fetchJson<{ status: string }>("/api/health"),
 }
