@@ -35,7 +35,8 @@ export function FilterBar({
           />
           <span className="text-xs text-slate-400">to</span>
           <input
-            type="date"\tableofcontents={to}
+            type="date"
+            value={to}
             onChange={(e) => setTo(e.target.value)}
             className="border border-slate-200 rounded-lg px-3 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
           />
