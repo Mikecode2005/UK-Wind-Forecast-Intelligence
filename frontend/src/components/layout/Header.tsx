@@ -56,51 +56,46 @@ export function Header({
   }
 
   return (
-    <header className="sticky top-0 z-30 bg-white/95 dark:bg-slate-950/95 backdrop-blur-sm border-b border-slate-200 dark:border-slate-800">
+    <header className="sticky top-0 z-30 bg-white border-b border-slate-200 shadow-sm">
       <div className="max-w-full mx-auto px-6 py-4">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <div className="flex flex-col gap-1">
-            <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
+          <div className="flex flex-col gap-0.5">
+            <h1 className="text-xl font-semibold text-slate-900 tracking-tight">
               {currentPage.title}
             </h1>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
-              {currentPage.description}
-            </p>
+            <p className="text-sm text-slate-500">{currentPage.description}</p>
           </div>
+
           <div className="flex flex-wrap items-center gap-3">
-            <div className="relative group">
-              <button
-                onClick={() => setShowDatePicker(true)}
-                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
-              >
-                <Calendar className="w-4 h-4" aria-hidden="true" />
-                <span>
-                  {format(new Date(analysisFrom), "MMM d, yyyy")} –{" "}
-                  {format(new Date(analysisTo), "MMM d, yyyy")}
-                </span>
-              </button>
-            </div>
+            <button
+              onClick={() => setShowDatePicker(true)}
+              className="btn-secondary"
+            >
+              <Calendar className="w-4 h-4 text-slate-500" aria-hidden="true" />
+              <span>
+                {format(new Date(analysisFrom), "MMM d, yyyy")} –{" "}
+                {format(new Date(analysisTo), "MMM d, yyyy")}
+              </span>
+            </button>
 
-            <div className="flex items-center gap-2">
-              <button
-                onClick={onRefresh}
-                disabled={isLoading}
-                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isLoading ? (
-                  <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
-                ) : (
-                  <RotateCcw className="w-4 h-4" aria-hidden="true" />
-                )}
-                <span>Refresh</span>
-              </button>
-            </div>
+            <button
+              onClick={onRefresh}
+              disabled={isLoading}
+              className="btn-primary"
+            >
+              {isLoading ? (
+                <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
+              ) : (
+                <RotateCcw className="w-4 h-4" aria-hidden="true" />
+              )}
+              <span>Refresh</span>
+            </button>
 
-            <div className="hidden sm:flex items-center gap-2 px-3 py-2 text-xs text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-900 rounded-lg">
+            <div className="hidden sm:flex items-center gap-2 px-3 py-2 text-xs text-slate-500 bg-slate-50 border border-slate-100 rounded-lg">
               {lastRefresh ? (
                 <>
-                  <span>Last updated: </span>
-                  <span className="font-mono text-slate-700 dark:text-slate-300">
+                  <span>Last updated</span>
+                  <span className="font-mono text-slate-700">
                     {format(lastRefresh, "HH:mm:ss")}
                   </span>
                 </>
@@ -109,16 +104,17 @@ export function Header({
               )}
             </div>
 
-            <span className="hidden lg:inline-flex items-center gap-1.5 px-2 py-1 text-xs font-medium text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 rounded-full">
-              <span className="w-2 h-2 rounded-full bg-green-500" aria-hidden="true" />
-              <span>Elexon API</span>
+            <span className="hidden lg:inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-full">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" aria-hidden="true" />
+              Elexon API
             </span>
           </div>
         </div>
       </div>
 
+      {/* Date picker modal */}
       <div
-        className={`fixed inset-0 z-50 bg-black/50 transition-opacity ${
+        className={`fixed inset-0 z-50 bg-slate-900/40 transition-opacity ${
           showDatePicker ? "opacity-100" : "opacity-0 pointer-events-none"
         }`}
         onClick={() => setShowDatePicker(false)}
@@ -127,68 +123,48 @@ export function Header({
       {showDatePicker && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div
-            className="bg-white dark:bg-slate-900 rounded-xl shadow-xl p-6 w-full max-w-md animate-in slide-in-from-bottom-2 duration-200"
+            className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md border border-slate-100"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-lg font-semibold text-slate-900">
                 Select Analysis Period
               </h3>
               <button
                 onClick={() => setShowDatePicker(false)}
-                className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                className="p-2 rounded-lg hover:bg-slate-100 text-slate-400 transition-colors"
                 aria-label="Close date picker"
               >
-                <svg
-                  className="w-5 h-5 text-slate-500"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>
-            <div className="grid grid-cols-2 gap-4 mb-4">
+            <div className="grid grid-cols-2 gap-4 mb-5">
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  From
-                </label>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">From</label>
                 <input
                   type="date"
                   value={analysisFrom}
                   onChange={(e) => onDateChange(e.target.value, analysisTo)}
-                  className="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  To
-                </label>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">To</label>
                 <input
                   type="date"
                   value={analysisTo}
                   onChange={(e) => onDateChange(analysisFrom, e.target.value)}
-                  className="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
                 />
               </div>
             </div>
             <div className="flex justify-end gap-2">
-              <button
-                onClick={() => setShowDatePicker(false)}
-                className="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700"
-              >
+              <button onClick={() => setShowDatePicker(false)} className="btn-secondary">
                 Cancel
               </button>
-              <button
-                onClick={() => setShowDatePicker(false)}
-                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
-              >
+              <button onClick={() => setShowDatePicker(false)} className="btn-primary">
                 Apply
               </button>
             </div>
