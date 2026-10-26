@@ -25,7 +25,6 @@ export function ErrorAnalysisChart({ points }: ErrorAnalysisChartProps) {
     return d.toLocaleDateString(undefined, { month: "short", day: "numeric" })
   }
 
-  // Use a denser sample for the difference line so the shape is clear
   const sample =
     matched.length > 200
       ? matched.filter((_, i) => i % Math.ceil(matched.length / 200) === 0)
@@ -72,7 +71,10 @@ export function ErrorAnalysisChart({ points }: ErrorAnalysisChartProps) {
             tickLine={false}
             tick={{ fontSize: 11, fill: "#64748b" }}
             width={55}
-            tickFormatter={(v) => `${v >= 0 ? "+" : ""}${Math.round(v)}`}
+            tickFormatter={(v) => {
+              const n = Number(v)
+              return `${n >= 0 ? "+" : ""}${Math.round(n)}`
+            }}
           />
           <ReferenceLine y={0} stroke="#94a3b8" strokeDasharray="4 4" />
           <Tooltip
@@ -84,18 +86,20 @@ export function ErrorAnalysisChart({ points }: ErrorAnalysisChartProps) {
               boxShadow: "0 8px 24px rgba(15,23,42,0.08)",
               fontSize: 12,
             }}
-            labelFormatter={(label: string) =>
-              new Date(label).toLocaleString(undefined, {
+            labelFormatter={(label) => {
+              if (label == null) return ""
+              return new Date(String(label)).toLocaleString(undefined, {
                 month: "short",
                 day: "numeric",
                 hour: "2-digit",
                 minute: "2-digit",
               })
-            }
-            formatter={(value: number) => [
-              `${value >= 0 ? "+" : ""}${value.toFixed(1)} MW`,
-              "Error",
-            ]}
+            }}
+            formatter={(value) => {
+              const n = typeof value === "number" ? value : Number(value)
+              if (!Number.isFinite(n)) return ["—", "Error"]
+              return [`${n >= 0 ? "+" : ""}${n.toFixed(1)} MW`, "Error"]
+            }}
           />
           <Line
             type="monotone"

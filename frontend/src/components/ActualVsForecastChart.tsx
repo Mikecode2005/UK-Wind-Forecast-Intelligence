@@ -84,7 +84,7 @@ export function ActualVsForecastChart({ points }: ActualVsForecastChartProps) {
             tickLine={false}
             tick={{ fontSize: 11, fill: "#64748b", fontFamily: "Inter" }}
             width={58}
-            tickFormatter={(v) => `${Math.round(v / 1000)}k`}
+            tickFormatter={(v) => `${Math.round(Number(v) / 1000)}k`}
           />
           <Tooltip
             cursor={{ stroke: "#94a3b8", strokeDasharray: "4 4" }}
@@ -96,18 +96,20 @@ export function ActualVsForecastChart({ points }: ActualVsForecastChartProps) {
               fontSize: 12,
               fontFamily: "Inter",
             }}
-            labelFormatter={(label: string) =>
-              new Date(label).toLocaleString(undefined, {
+            labelFormatter={(label) => {
+              if (label == null) return ""
+              const d = new Date(String(label))
+              return d.toLocaleString(undefined, {
                 month: "short",
                 day: "numeric",
                 hour: "2-digit",
                 minute: "2-digit",
               })
-            }
-            formatter={(value: number, name: string) => [
-              `${value.toFixed(1)} MW`,
-              name,
-            ]}
+            }}
+            formatter={(value, name) => {
+              const n = typeof value === "number" ? value : Number(value)
+              return [`${Number.isFinite(n) ? n.toFixed(1) : "—"} MW`, String(name)]
+            }}
           />
           <Legend content={() => null} />
           <Area
