@@ -67,10 +67,7 @@ export function Header({
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            <button
-              onClick={() => setShowDatePicker(true)}
-              className="btn-secondary"
-            >
+            <button onClick={() => setShowDatePicker(true)} className="btn-secondary">
               <Calendar className="w-4 h-4 text-slate-500" aria-hidden="true" />
               <span>
                 {format(new Date(analysisFrom), "MMM d, yyyy")} –{" "}
@@ -78,11 +75,7 @@ export function Header({
               </span>
             </button>
 
-            <button
-              onClick={onRefresh}
-              disabled={isLoading}
-              className="btn-primary"
-            >
+            <button onClick={onRefresh} disabled={isLoading} className="btn-primary">
               {isLoading ? (
                 <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
               ) : (
@@ -94,13 +87,15 @@ export function Header({
             <div className="hidden sm:flex items-center gap-2 px-3 py-2 text-xs text-slate-500 bg-slate-50 border border-slate-100 rounded-lg">
               {lastRefresh ? (
                 <>
-                  <span>Last updated</span>
+                  <span>Last refreshed</span>
                   <span className="font-mono text-slate-700">
                     {format(lastRefresh, "HH:mm:ss")}
                   </span>
                 </>
               ) : (
-                <span>No data loaded yet</span>
+                <span title="Page load uses cached/API data; click Refresh to force a new fetch">
+                  Analysis ready
+                </span>
               )}
             </div>
 
@@ -112,7 +107,6 @@ export function Header({
         </div>
       </div>
 
-      {/* Date picker modal */}
       <div
         className={`fixed inset-0 z-50 bg-slate-900/40 transition-opacity ${
           showDatePicker ? "opacity-100" : "opacity-0 pointer-events-none"
@@ -127,9 +121,7 @@ export function Header({
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-5">
-              <h3 className="text-lg font-semibold text-slate-900">
-                Select Analysis Period
-              </h3>
+              <h3 className="text-lg font-semibold text-slate-900">Select Analysis Period</h3>
               <button
                 onClick={() => setShowDatePicker(false)}
                 className="p-2 rounded-lg hover:bg-slate-100 text-slate-400 transition-colors"
