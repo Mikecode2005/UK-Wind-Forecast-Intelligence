@@ -49,29 +49,47 @@ export function OverviewPage() {
 
   if (isLoading && !overview) {
     return (
-      <div className="flex flex-col items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600" />
-        <p className="mt-4 text-slate-500">Loading wind forecast intelligence...</p>
+      <div className="flex flex-col items-center justify-center h-72">
+        <div className="animate-spin rounded-full h-9 w-9 border-2 border-brand-200 border-t-brand-600" />
+        <p className="mt-4 text-sm text-slate-500 font-medium">
+          Loading wind forecast intelligence…
+        </p>
       </div>
     )
   }
 
   return (
-    <div className="space-y-6">
-      <FilterBar defaultFrom={DEFAULT_FROM} defaultTo={DEFAULT_TO} onRun={() => {}} />
-
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2 text-sm text-slate-600">
-          <span>
-            Analysis period: {from} to {to}
-          </span>
-          <span className="px-2 py-0.5 text-[10px] font-medium bg-amber-50 text-amber-800 border border-amber-100 rounded-full">
-            Historical analysis — not a live forecast
-          </span>
+    <div className="space-y-6 max-w-[1400px]">
+      {/* Hero */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-700 via-brand-600 to-brand-500 px-6 py-7 text-white shadow-lg">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(255,255,255,0.12),_transparent_50%)]" />
+        <div className="relative flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+          <div>
+            <p className="text-brand-100 text-xs font-semibold uppercase tracking-widest mb-1.5">
+              Day-ahead procurement support
+            </p>
+            <h2 className="text-2xl md:text-3xl font-bold tracking-tight">
+              January 2026 wind forecast performance
+            </h2>
+            <p className="mt-2 text-brand-100 text-sm max-w-xl leading-relaxed">
+              What the procurement team knew at decision time — and how accurate those
+              forecasts turned out against actual generation.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <span className="inline-flex items-center px-3 py-1.5 rounded-full bg-white/15 text-xs font-medium backdrop-blur-sm border border-white/20">
+              Cutoff {cutoffHour}:00 UK · D-1
+            </span>
+            <span className="inline-flex items-center px-3 py-1.5 rounded-full bg-amber-400/20 text-amber-50 text-xs font-medium border border-amber-300/30">
+              Historical analysis — not live
+            </span>
+          </div>
         </div>
-        <div className="text-xs text-slate-500">Cutoff: {cutoffHour}:00 UK (D-1)</div>
       </div>
 
+      <FilterBar defaultFrom={DEFAULT_FROM} defaultTo={DEFAULT_TO} onRun={() => {}} />
+
+      {/* KPI strip */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <KPICard
           title="Mean Absolute Error"
@@ -97,13 +115,14 @@ export function OverviewPage() {
           value={overview ? `${overview.dataCoveragePercent.toFixed(1)}%` : "— %"}
           subtitle={
             overview
-              ? `${overview.matchedIntervals} / ${overview.totalIntervals} intervals`
+              ? `${overview.matchedIntervals.toLocaleString()} / ${overview.totalIntervals.toLocaleString()} intervals`
               : "—"
           }
           highlight
         />
       </div>
 
+      {/* Main content */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
           <ActualVsForecastChart points={points} />
