@@ -1,4 +1,11 @@
-"""AI or rule-based procurement insights from accuracy metrics."""
+"""AI or rule-based procurement insights from accuracy metrics.
+
+Default provider: NVIDIA Integrate API (OpenAI-compatible).
+
+  NVIDIA_API_KEY or AI_API_KEY or OPENAI_API_KEY
+  AI_API_BASE   default https://integrate.api.nvidia.com/v1
+  AI_MODEL      default nvidia/nemotron-3-ultra-550b-a55b
+"""
 
 from __future__ import annotations
 
@@ -7,9 +14,16 @@ from typing import Any, Optional
 
 import httpx
 
-AI_API_KEY = os.environ.get("AI_API_KEY") or os.environ.get("OPENAI_API_KEY") or ""
-AI_API_BASE = os.environ.get("AI_API_BASE", "https://api.openai.com/v1")
-AI_MODEL = os.environ.get("AI_MODEL", "gpt-4o-mini")
+AI_API_KEY = (
+    os.environ.get("NVIDIA_API_KEY")
+    or os.environ.get("AI_API_KEY")
+    or os.environ.get("OPENAI_API_KEY")
+    or ""
+)
+AI_API_BASE = os.environ.get(
+    "AI_API_BASE", "https://integrate.api.nvidia.com/v1"
+).rstrip("/")
+AI_MODEL = os.environ.get("AI_MODEL", "nvidia/nemotron-3-ultra-550b-a55b")
 
 
 def rule_based_insights(payload: dict[str, Any]) -> str:
@@ -77,26 +91,38 @@ def llm_insights(payload: dict[str, Any]) -> Optional[str]:
         f"Metrics: {payload}"
     )
 
+    body: dict[str, Any] = {
+        "model": AI_MODEL,
+        "messages": [
+            {
+                "role": "system",
+                "content": "You write short trading desk briefings for electricity procurement.",
+            },
+            {"role": "user", "content": prompt},
+        ],
+        "temperature": 0.4,
+        "top_p": 0.95,
+        "max_tokens": 1024,
+        "stream": False,
+    }
+    # Nemotron optional thinking flag (ignored by other models)
+    if "nemotron" in AI_MODEL.lower():
+        body["chat_template_kwargs"] = {"enable_thinking": False}
+
     try:
-        with httpx.Client(timeout=45.0) as client:
+        with httpx.Client(timeout=90.0) as client:
             resp = client.post(
-                f"{AI_API_BASE.rstrip('/')}/chat/completions",
+                f"{AI_API_BASE}/chat/completions",
                 headers={
                     "Authorization": f"Bearer {AI_API_KEY}",
                     "Content-Type": "application/json",
                 },
-                json={
-                    "model": AI_MODEL,
-                    "messages": [
-                        {"role": "system", "content": "You write short trading desk briefings."},
-                        {"role": "user", "content": prompt},
-                    ],
-                    "temperature": 0.3,
-                },
+                json=body,
             )
             resp.raise_for_status()
             data = resp.json()
-            return data["choices"][0]["message"]["content"].strip()
+            content = data["choices"][0]["message"].get("content") or ""
+            return content.strip() or None
     except Exception:
         return None
 
