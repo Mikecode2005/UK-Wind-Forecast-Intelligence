@@ -38,7 +38,7 @@ export function OverviewPage() {
   const openHistory = async (pt: IntervalPoint) => {
     try {
       await api.forecastHistory(pt.startTime, cutoffHour, 0)
-    } catch (e: any) {
+    } catch (e) {
       console.error(e)
     }
   }
@@ -50,7 +50,7 @@ export function OverviewPage() {
   if (isLoading && !overview) {
     return (
       <div className="flex flex-col items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600" />
         <p className="mt-4 text-slate-500">Loading wind forecast intelligence...</p>
       </div>
     )
@@ -58,29 +58,50 @@ export function OverviewPage() {
 
   return (
     <div className="space-y-6">
-      <FilterBar
-        defaultFrom="2026-01-01"
-        defaultTo="2026-01-31"
-        onRun={() => {}}
-      />
+      <FilterBar defaultFrom={DEFAULT_FROM} defaultTo={DEFAULT_TO} onRun={() => {}} />
 
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
-          <span>Analysis period: {from} to {to}</span>
-          <span className="px-2 py-0.5 text-[10px] font-medium bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200 rounded">
-            Historical analysis \u2013 not a live forecast
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2 text-sm text-slate-600">
+          <span>
+            Analysis period: {from} to {to}
+          </span>
+          <span className="px-2 py-0.5 text-[10px] font-medium bg-amber-50 text-amber-800 border border-amber-100 rounded-full">
+            Historical analysis — not a live forecast
           </span>
         </div>
-        <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-          <span>Cutoff: {cutoffHour}:00 UK (D-1)</span>
-        </div>
+        <div className="text-xs text-slate-500">Cutoff: {cutoffHour}:00 UK (D-1)</div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <KPICard title="Mean Absolute Error" value={overview ? overview.maeMw?.toFixed(1) + " MW" : "\u2014 MW"} subtitle="Average |forecast \u2212 actual|" />
-        <KPICard title="Root Mean Squared Error" value={overview ? overview.rmseMw?.toFixed(1) + " MW" : "\u2014 MW"} subtitle="Penalizes larger deviations" />
-        <KPICard title="Mean Forecast Bias" value={overview ? (overview.biasMw ?? 0 >= 0 ? "+" : "") + (overview.biasMw ?? 0).toFixed(1) + " MW" : "\u2014 MW"} subtitle="Forecast \u2212 actual (positive = overforecast)" />
-        <KPICard title="Data Coverage" value={overview ? overview.dataCoveragePercent.toFixed(1) + "%" : "\u2014 %"} subtitle={overview ? overview.matchedIntervals + " / " + overview.totalIntervals + " intervals" : "\u2014"} highlight />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <KPICard
+          title="Mean Absolute Error"
+          value={overview ? `${overview.maeMw?.toFixed(1)} MW` : "— MW"}
+          subtitle="Average |forecast − actual|"
+        />
+        <KPICard
+          title="Root Mean Squared Error"
+          value={overview ? `${overview.rmseMw?.toFixed(1)} MW` : "— MW"}
+          subtitle="Penalizes larger deviations"
+        />
+        <KPICard
+          title="Mean Forecast Bias"
+          value={
+            overview
+              ? `${(overview.biasMw ?? 0) >= 0 ? "+" : ""}${(overview.biasMw ?? 0).toFixed(1)} MW`
+              : "— MW"
+          }
+          subtitle="Forecast − actual (positive = overforecast)"
+        />
+        <KPICard
+          title="Data Coverage"
+          value={overview ? `${overview.dataCoveragePercent.toFixed(1)}%` : "— %"}
+          subtitle={
+            overview
+              ? `${overview.matchedIntervals} / ${overview.totalIntervals} intervals`
+              : "—"
+          }
+          highlight
+        />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -90,8 +111,28 @@ export function OverviewPage() {
           <DataTable points={tableRows} onRowSelect={openHistory} />
         </div>
         <div className="space-y-6">
-          <AccuracyPanel accuracy={accuracy || { period: "", matchedIntervals: 0, maeMw: 0, rmseMw: 0, biasMw: 0, mapePercent: null, meanActualMw: 0, meanForecastMw: 0, intervals: [] }} />
-          <MethodologyPanel period={overview?.period || ""} cutoff={overview?.forecastCutoff || ""} coverage={overview?.dataCoveragePercent || 0} matched={overview?.matchedIntervals || 0} total={overview?.totalIntervals || 0} />
+          <AccuracyPanel
+            accuracy={
+              accuracy || {
+                period: "",
+                matchedIntervals: 0,
+                maeMw: 0,
+                rmseMw: 0,
+                biasMw: 0,
+                mapePercent: null,
+                meanActualMw: 0,
+                meanForecastMw: 0,
+                intervals: [],
+              }
+            }
+          />
+          <MethodologyPanel
+            period={overview?.period || ""}
+            cutoff={overview?.forecastCutoff || ""}
+            coverage={overview?.dataCoveragePercent || 0}
+            matched={overview?.matchedIntervals || 0}
+            total={overview?.totalIntervals || 0}
+          />
         </div>
       </div>
     </div>
